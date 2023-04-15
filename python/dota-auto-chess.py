@@ -46,7 +46,9 @@ for name, race in types.items():
     for level in range(0, 7):
         single_proba = sum([ a[i][level]/100.0 * race[i] for i in range(0,4) ] ) / sum( [ a[i][level]/100.0 * total_pieces[i] for i in range(0,4) ] )
 
-        print(f"{name} for level {level+1} proba is {single_proba:.3f}")
+        print(f"{name} for level {level+1} 1p proba is {single_proba:.3f}")
+        fiveP_proba = 1-(1-single_proba)**5
+        print(f"{name} for level {level+1} 5p proba is {fiveP_proba:.3f}\n")
 
 
 
