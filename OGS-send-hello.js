@@ -4,7 +4,7 @@
 // @version      0.1
 // @description  Send a message to game chat on online-go.com
 // @author       You
-// @match        https://online-go.com/game/*
+// @match        https://online-go.com/*
 // @grant        none
 // ==/UserScript==
 
@@ -15,6 +15,7 @@
     // Global variable to store the last URL where the function was called
     let lastURL = '';
     let messageToSend = "Hello have fun";
+    let myPlayerID = "680893";
 
     function checkAndSendMessage() {
         // If the function was already called on this URL, do nothing
@@ -25,13 +26,26 @@
         // Update the last URL
         lastURL = window.location.href;
 
-        let chatInputBox = document.querySelector("#default-variant-container > div:nth-child(3) > div > div.right-col > div.GameChat > div.chat-input-container.input-group > input");
-
         let messageAlreadySent = false;
         let checkCount = 0;
         let checkMessages = setInterval(function() {
-            let messages = document.querySelectorAll("#default-variant-container > div:nth-child(3) > div > div.right-col > div.GameChat > div.log-player-container > div > div > div > div.chat-line.main.chat-user-680893 > span.body > span");
 
+            //check I am one of the players
+            let blackPlayer = document.querySelector("#default-variant-container > div:nth-child(3) > div > div.right-col > div.players > div > div > div.white.player-name-container > span > a")
+            let whitePlayer = document.querySelector("#default-variant-container > div:nth-child(3) > div > div.right-col > div.players > div > div > div.black.player-name-container > span > a")
+            if( blackPlayer !== null && whitePlayer !== null){
+                //console.log("players OK ["+ blackPlayer +"] ["+ whitePlayer+"]");
+                if(blackPlayer.getAttribute('data-player-id')!==myPlayerID && whitePlayer.getAttribute('data-player-id')!==myPlayerID){
+                    console.log("Not my game("+ window.location.href +") return now ["+ blackPlayer.getAttribute('data-player-id') +"] ["+ whitePlayer.getAttribute('data-player-id')+"]");
+                    return;
+                }
+            }else{
+                //console.log("one player is null["+ blackPlayer +"] ["+ whitePlayer+"]");
+                return;
+            }
+
+            let messages = document.querySelectorAll("#default-variant-container > div:nth-child(3) > div > div.right-col > div.GameChat > div.log-player-container > div > div > div > div.chat-line.main.chat-user-"+myPlayerID+" > span.body > span");
+            console.log("checkMessages:" + checkCount + " messages:" + messages.length);
             if (messages.length > 0 || checkCount > 4) { // checking every 1000ms for 5sec
                 clearInterval(checkMessages); // stop checking
                 messages.forEach((message) => {
@@ -40,10 +54,10 @@
                         messageAlreadySent = true;
                     }
                 });
+                let chatInputBox = document.querySelector("#default-variant-container > div:nth-child(3) > div > div.right-col > div.GameChat > div.chat-input-container.input-group > input");
                 if ( messageAlreadySent ) {
                     console.log("message already sent:" + window.location.href);
-                }
-                if (!messageAlreadySent && chatInputBox !== null) {
+                } else if (chatInputBox !== null) {
                     chatInputBox.focus(); // Focus on the input box
                     chatInputBox.value = messageToSend;
 					// Create a new 'change' event
@@ -54,6 +68,8 @@
 
 					chatInputBox.dispatchEvent(new KeyboardEvent('keypress', { bubbles: true, cancelable: true, keyCode: 13}));
                     console.log("Sending message to " + window.location.href);
+                }else{
+                    console.log("Weird issue " + chatInputBox + " messageAlreadySent:" + messageAlreadySent);
                 }
             }else{
                 console.log("If is false, wait 1sec len:" + messages.length + " checkCount:" + checkCount);
