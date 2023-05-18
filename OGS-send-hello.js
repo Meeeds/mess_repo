@@ -19,20 +19,10 @@
 
     function checkAndSendMessage() {
         // If the function was already called on this URL, do nothing
-        let gameChatElement = document.querySelector("div.GameChat");
         if (lastURL === window.location.href) {
             console.log("Url already checked: " + lastURL);
             return;
         }
-
-        // If the function was already called on this URL or if the GameChat element has already been processed, do nothing
-        if ( gameChatElement.getAttribute('data-processed-by-Tampermonke') ) {
-            console.log("GameChat already processed: " + window.location.href);
-            return;
-        }
-
-        gameChatElement.setAttribute('data-processed-by-Tampermonkey', 'true');
-
         // Update the last URL
         lastURL = window.location.href;
 
