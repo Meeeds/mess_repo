@@ -19,10 +19,20 @@
 
     function checkAndSendMessage() {
         // If the function was already called on this URL, do nothing
+        let gameChatElement = document.querySelector("div.GameChat");
         if (lastURL === window.location.href) {
             console.log("Url already checked: " + lastURL);
             return;
         }
+
+        // If the function was already called on this URL or if the GameChat element has already been processed, do nothing
+        if ( gameChatElement.getAttribute('data-processed-by-Tampermonke') ) {
+            console.log("GameChat already processed: " + window.location.href);
+            return;
+        }
+
+        gameChatElement.setAttribute('data-processed-by-Tampermonkey', 'true');
+
         // Update the last URL
         lastURL = window.location.href;
 
@@ -37,16 +47,18 @@
                 //console.log("players OK ["+ blackPlayer +"] ["+ whitePlayer+"]");
                 if(blackPlayer.getAttribute('data-player-id')!==myPlayerID && whitePlayer.getAttribute('data-player-id')!==myPlayerID){
                     console.log("Not my game("+ window.location.href +") return now ["+ blackPlayer.getAttribute('data-player-id') +"] ["+ whitePlayer.getAttribute('data-player-id')+"]");
+                    clearInterval(checkMessages); // stop checking
                     return;
                 }
             }else{
                 //console.log("one player is null["+ blackPlayer +"] ["+ whitePlayer+"]");
+                clearInterval(checkMessages); // stop checking
                 return;
             }
 
             let messages = document.querySelectorAll("#default-variant-container > div:nth-child(3) > div > div.right-col > div.GameChat > div.log-player-container > div > div > div > div.chat-line.main.chat-user-"+myPlayerID+" > span.body > span");
             console.log("checkMessages:" + checkCount + " messages:" + messages.length);
-            if (messages.length > 0 || checkCount > 4) { // checking every 1000ms for 5sec
+            if (messages.length > 0 || checkCount > 2) { // checking every 1000ms for 5sec
                 clearInterval(checkMessages); // stop checking
                 messages.forEach((message) => {
                     console.log("My messages : " +message.innerText);
@@ -78,14 +90,31 @@
             checkCount++;
         }, 1000);
     }
-    // Create a mutation observer to watch for changes in the body of the page
-    let observer = new MutationObserver(function(mutations) {
-        // If the URL contains '/game/', call the function to check and send the message
-        if (window.location.href.includes('/game/')) {
-            setTimeout( checkAndSendMessage(), 500); // Execute something() 500ms after
-        }
-    });
 
-    // Start observing the body for changes
-    observer.observe(document.body, { childList: true, subtree: true });
+
+    // Create a function to observe a specific element
+    function observeChat(chatElement) {
+        // Create a mutation observer to watch for changes in the chat div
+        let observer = new MutationObserver(function(mutations) {
+            // If the URL contains '/game/', call the function to check and send the message
+            if (window.location.href.includes('/game/')) {
+                setTimeout( checkAndSendMessage(), 500); // Execute something() 500ms after
+            }
+        });
+
+        // Start observing the chat for changes
+        observer.observe(chatElement, { childList: true, subtree: true });
+    }
+
+    // Create an interval to check every 500ms if the chat div exists
+    let checkChatExists = setInterval(function() {
+        let chatElement = document.querySelector("div.GameChat");
+        if(chatElement !== null) {
+            // If the chat div exists, stop checking and start observing
+            clearInterval(checkChatExists);
+            checkAndSendMessage();
+            observeChat(chatElement);
+        }
+    }, 500);
+
 })();
